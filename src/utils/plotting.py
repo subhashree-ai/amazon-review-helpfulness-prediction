@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score,precision_score,classification_report,confusion_matrix, roc_curve,auc
+
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 # data visualization
 import matplotlib.pyplot as plt
@@ -61,3 +63,56 @@ def plot_history(history):
     plt.legend()
     plt.show()
     
+def plot_loss(history, label, n):
+    # Use a log scale to show the wide range of values.
+    plt.semilogy(history.epoch,  history.history['loss'],
+               color=colors[n], label='Train '+label)
+    plt.semilogy(history.epoch,  history.history['val_loss'],
+          color=colors[n], label='Val '+label,
+          linestyle="--")
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    
+    plt.legend()
+
+def plot_metrics(history):
+    metrics =  ['loss', 'auc', 'precision', 'recall']
+    for n, metric in enumerate(metrics):
+        name = metric.replace("_"," ").capitalize()
+        plt.subplot(2,2,n+1)
+        plt.figure(figsize=(12, 5))
+        plt.plot(history.epoch,  history.history[metric], color=colors[0], label='Train')
+        plt.plot(history.epoch, history.history['val_'+metric],
+                 color=colors[0], linestyle="--", label='Val')
+        plt.xlabel('Epoch')
+        plt.ylabel(name)
+        
+        plt.legend()
+
+def plot_cm(labels, predictions, p=0.5):
+    cm = confusion_matrix(labels, predictions > p)
+    plt.figure(figsize=(5,5))
+    sns.heatmap(cm, annot=True, fmt="d")
+    plt.title('Confusion matrix @{:.2f}'.format(p))
+    plt.ylabel('Actual label')
+    plt.xlabel('Predicted label')
+
+    print('Not Helpful reviews Detected (True Negatives): ', cm[0][0])
+    print('Not Helpful reviews Incorrectly Detected (False Positives): ', cm[0][1])
+    print('Helpful Reviews Missed (False Negatives): ', cm[1][0])
+    print('Helpful Reviews Detected (True Positives): ', cm[1][1])
+    print('Total Helpful Reviews: ', np.sum(cm[1]))
+    
+def plot_roc_dl(name, labels, predictions, **kwargs):
+    fp, tp, _ = roc_curve(labels, predictions)
+
+    plt.plot(fp, tp, label=name, linewidth=2, **kwargs)
+    plt.xlabel('False positives [%]')
+    plt.ylabel('True positives [%]')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.grid(True)
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    
+    plt.legend(loc='lower right')
